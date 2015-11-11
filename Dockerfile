@@ -1,48 +1,50 @@
-# Ubuntu 14.04£¬Trusty Tahr£¨¿É¿¿µÄËş¶ûÑò£©·¢ĞĞ°æ
-FROM ubuntu:trusty
+FROM ubuntu
 
-# µÀ¿Í´¬³¤ÈÙÓş³öÆ·
-MAINTAINER Captain Dao <support@daocloud.io>
+# ç­¾å
+MAINTAINER saymagic "saymagic@163.com"
 
-# APT ×Ô¶¯°²×° PHP Ïà¹ØµÄÒÀÀµ°ü£¬ÈçĞèÆäËûÒÀÀµ°üÔÚ´ËÌí¼Ó
-RUN apt-get update \  
-    && apt-get -y install \
-        curl \
-        wget \
-        apache2 \
-        libapache2-mod-php5 \
-        php5-mysql \
-        php5-sqlite \
-        php5-gd \
-        php5-curl \
-        php-pear \
-        php-apc \
+# å®‰è£…JDKã€nginxã€Git
+RUN apt-get update
+RUN apt-get install openjdk-7-jre -y
+RUN apt-get install openjdk-7-jdk -y
+RUN apt-get install nginx -y
+RUN apt-get install git -y
 
-    # ÓÃÍê°ü¹ÜÀíÆ÷ºó°²ÅÅ´òÉ¨ÎÀÉú¿ÉÒÔÏÔÖøµÄ¼õÉÙ¾µÏñ´óĞ¡
-    && apt-get clean \
-    && apt-get autoclean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+#æ‹·è´nginxé…ç½®æ–‡ä»¶
+ADD ./etc/nginx-conf /etc/nginx/conf.d
 
-    # °²×° Composer£¬´ËÎïÊÇ PHP ÓÃÀ´¹ÜÀíÒÀÀµ¹ØÏµµÄ¹¤¾ß
-    # Laravel Symfony µÈÊ±÷ÖµÄ¿ò¼Ü»áÒÀÀµËü
-    && curl -sS https://getcomposer.org/installer \
-        | php -- --install-dir=/usr/local/bin --filename=composer
+#æ‹·è´å¯åŠ¨è„šæœ¬
+ADD ./etc/scripts /usr/local
+RUN chmod a+x /usr/local/start.sh
 
-# Apache 2 ÅäÖÃÎÄ¼ş£º/etc/apache2/apache2.conf
-# ¸ø Apache 2 ÉèÖÃÒ»¸öÄ¬ÈÏ·şÎñÃû£¬±ÜÃâÆô¶¯Ê±¸ø¸öÌáÊ¾ÈÃÈË½ôÕÅ.
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+#æ‹·è´Tomcatä¸mavenå®‰è£…åŒ…
+ADD ./soft /tmp
 
-    # PHP ÅäÖÃÎÄ¼ş£º/etc/php5/apache2/php.ini
-    # µ÷Õû PHP ´¦Àí Request Àï±äÁ¿Ìá½»ÖµµÄË³Ğò£¬½âÎöË³Ğò´Ó×óµ½ÓÒ£¬ºó½âÎöĞÂÖµ¸²¸Ç¾ÉÖµ
-    # Ä¬ÈÏÉè¶¨Îª EGPCS£¨ENV/GET/POST/COOKIE/SERVER£©
-    && sed -i 's/variables_order.*/variables_order = "EGPCS"/g' \
-        /etc/php5/apache2/php.ini
+# å®‰è£…Tomcat 7
+RUN cd /usr/local && tar xzf /tmp/apache-tomcat-7.0.64.tar.gz
+RUN ln -s /usr/local/apache-tomcat-7.0.64 /usr/local/tomcat
+RUN rm /tmp/apache-tomcat-7.0.64.tar.gz
 
-# ÅäÖÃÄ¬ÈÏ·ÅÖÃ App µÄÄ¿Â¼
-RUN mkdir -p /app && rm -rf /var/www/html && ln -s /app /var/www/html  
-COPY . /app  
-WORKDIR /app  
-RUN chmod 755 ./start.sh
+# å®‰è£…maven
+RUN cd /usr/local && tar xzf /tmp/apache-maven-3.1.1-bin.tar.gz
+RUN ln -s /usr/local/apache-maven-3.1.1 /usr/local/maven
+RUN rm /tmp/apache-maven-3.1.1-bin.tar.gz
 
-EXPOSE 80  
-CMD ["./start.sh"]  
+# clone ä»“åº“
+WORKDIR  /
+RUN git clone https://github.com/saymagic/wx_maven
+
+# å®šä¹‰ç¯å¢ƒå˜é‡	
+ENV TOMCAT_HOME /usr/local/tomcat
+ENV MAVEN_HOME /usr/local/maven
+ENV APP_HOME /wx_maven
+
+#ç¼–è¯‘æºä»£ç ä¸éƒ¨ç½²
+RUN cd /wx_maven && /usr/local/maven/bin/mvn package 
+RUN rm -rf $TOMCAT_HOME/webapps/*
+RUN cd /wx_maven && cp target/wx_server.war $TOMCAT_HOME/webapps/ROOT.war
+
+#å¯åŠ¨Tomcatä¸Nginx
+CMD /usr/local/start.sh && tail -F /usr/local/tomcat/logs/catalina.out
+
+EXPOSE 80 8080
