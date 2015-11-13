@@ -32,7 +32,7 @@ RUN rm /tmp/apache-maven-3.1.1-bin.tar.gz
 
 # clone 仓库
 WORKDIR  /
-RUN git clone https://github.com/saymagic/wx_maven
+RUN git clone https://github.com/curiousguy98/wx_maven
 
 # 定义环境变量	
 ENV TOMCAT_HOME /usr/local/tomcat
