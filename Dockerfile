@@ -1,7 +1,7 @@
 FROM ubuntu
 
 # 签名
-MAINTAINER saymagic "saymagic@163.com"
+MAINTAINER curiousguy98 "1433768997@qq.com"
 
 # 安装JDK、nginx、Git
 RUN apt-get update
