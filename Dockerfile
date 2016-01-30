@@ -1,7 +1,7 @@
 FROM ubuntu
 
 # 签名
-MAINTAINER curiousguy98 "1433768997@qq.com"
+MAINTAINER curiousguy98 "773372347@qq.com"
 
 # 安装JDK、nginx、Git
 RUN apt-get update
@@ -32,7 +32,7 @@ RUN rm /tmp/apache-maven-3.1.1-bin.tar.gz
 
 # clone 仓库
 WORKDIR  /
-RUN git clone https://github.com/curiousguy98/wx_maven
+RUN git clone https://github.com/jechiy/wx_maven
 
 # 定义环境变量	
 ENV TOMCAT_HOME /usr/local/tomcat
